@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\FileExtensionEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UploadFileRequest extends FormRequest
@@ -21,8 +22,10 @@ class UploadFileRequest extends FormRequest
      */
     public function rules(): array
     {
+        $fileExtensions = array_column(FileExtensionEnum::cases(), 'value');
+
         return [
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf'],
+            'file' => ['required', 'file', 'mimes:'.implode(',', $fileExtensions)],
             'name' => ['required', 'max:255'],
         ];
     }

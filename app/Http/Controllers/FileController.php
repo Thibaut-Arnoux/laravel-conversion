@@ -27,16 +27,14 @@ class FileController extends Controller
      */
     public function store(UploadFileRequest $request): JsonResponse
     {
-
-        $validated = $request->validated();
         /** @var \Illuminate\Http\UploadedFile $uploadFile */
-        $uploadFile = $validated['file'];
+        $uploadFile = $request->file;
         Storage::putFileAs('', $uploadFile, $uploadFile->hashName());
 
         $file = new File();
-        $file->name = $validated['name'];
+        $file->name = $request->name;
         $file->path = $uploadFile->hashName();
-        $file->extension = $uploadFile->extension();
+        $file->extension = FileExtensionEnum::from($uploadFile->extension());
         $file->save();
 
         return $this->respondCreated(new FileResource($file));
