@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignUuid('original_file_id')->references('id')->on('files');
             $table->foreignUuid('convert_file_id')->references('id')->on('files');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
