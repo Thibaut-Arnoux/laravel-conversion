@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\FileExtensionEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
-class FileUploadRequest extends FormRequest
+class ConvertFileRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -17,13 +19,12 @@ class FileUploadRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|string[]|string>
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|string[]|string|array<int, \Illuminate\Validation\Rules\Enum>>
      */
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'mimes:jpg, jpeg, png, pdf, docx, odt'],
-            'name' => ['required', 'max:255'],
+            'convert_extension' => ['required', new Enum(FileExtensionEnum::class)],
         ];
     }
 }
