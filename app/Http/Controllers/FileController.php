@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\FileUploadRequest;
+use App\Enums\FileExtensionEnum;
+use App\Http\Requests\ConvertFileRequest;
+use App\Http\Requests\UploadFileRequest;
+use App\Http\Resources\FileCollection;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\JsonResponse;
@@ -14,15 +17,15 @@ class FileController extends Controller
     /**
      * Display a listing of the resource.
      */
-    // public function index()
-    // {
-    //     //
-    // }
+    public function index(): JsonResponse
+    {
+        return $this->respondWithSuccess(new FileCollection(File::all()));
+    }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(FileUploadRequest $request): JsonResponse
+    public function store(UploadFileRequest $request): JsonResponse
     {
 
         $validated = $request->validated();
@@ -42,10 +45,10 @@ class FileController extends Controller
     /**
      * Display the specified resource.
      */
-    // public function show(File $file)
-    // {
-    //     //
-    // }
+    public function show(File $file): JsonResponse
+    {
+        return $this->respondWithSuccess(new FileResource($file));
+    }
 
     /**
      * Update the specified resource in storage.
@@ -62,4 +65,13 @@ class FileController extends Controller
     // {
     //     //
     // }
+
+    public function convert(ConvertFileRequest $request, File $file)
+    {
+        $convertExtension = FileExtensionEnum::tryFrom($request->convert_extension);
+
+        // TODO : Convert file with factory
+
+        // TODO : Return convert resource
+    }
 }

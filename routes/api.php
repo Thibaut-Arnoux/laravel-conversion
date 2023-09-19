@@ -19,4 +19,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::apiResource('files', FileController::class)->only(['store']);
+Route::apiResource('files', FileController::class)->only(['index', 'store', 'show']);
+Route::get('/files/{file}/convert', [FileController::class, 'convert'])->name('files.convert');
