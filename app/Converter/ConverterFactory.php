@@ -4,7 +4,7 @@ namespace App\Converter;
 
 use App\Enums\FileExtensionEnum;
 
-class ConverterFactory implements IConverterFactory
+class ConverterFactory
 {
     public static function createConverter(FileExtensionEnum $extension): IConverterService
     {

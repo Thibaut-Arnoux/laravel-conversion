@@ -3,7 +3,8 @@
 namespace App\Providers;
 
 use App\Converter\ConverterFactory;
-use App\Converter\IConverterFactory;
+use App\Converter\IConverterService;
+use App\Models\File;
 use Illuminate\Support\ServiceProvider;
 
 class ConverterServiceProvider extends ServiceProvider
@@ -13,8 +14,15 @@ class ConverterServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(IConverterFactory::class, function () {
-            return new ConverterFactory();
+        $this->app->bind(IConverterService::class, function () {
+            $file = request()->route('file');
+
+            if ($file instanceof File) {
+                // extract file or uuid from request
+                return ConverterFactory::createConverter($file->extension);
+            }
+
+            abort(404, 'Failed to inject converter');
         });
     }
 

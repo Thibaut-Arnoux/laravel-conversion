@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Converter\IConverterFactory;
+use App\Converter\IConverterService;
 use App\Enums\FileExtensionEnum;
 use App\Http\Requests\ConvertFileRequest;
 use App\Http\Requests\UploadFileRequest;
@@ -65,11 +65,11 @@ class FileController extends Controller
     //     //
     // }
 
-    public function convert(ConvertFileRequest $request, File $file, IConverterFactory $converter)
+    public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService)
     {
         $convertExtension = FileExtensionEnum::from($request->convert_extension);
 
-        $converter->createConverter($convertExtension)->convert($file, $convertExtension);
+        $converterService->convert($file, $convertExtension);
 
         // TODO : Convert file with factory
 
