@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\FileExtensionEnum;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -14,7 +15,7 @@ class FileResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array{id: string, name: string, extension: string, created_at: Carbon|null, updated_at: Carbon|null}
+     * @return array{id: string, name: string, extension: FileExtensionEnum, created_at: Carbon|null, updated_at: Carbon|null}
      */
     public function toArray(Request $request): array
     {
