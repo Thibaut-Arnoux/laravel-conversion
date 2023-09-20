@@ -24,7 +24,7 @@ class ConvertFileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'convert_extension' => ['required', new Enum(FileExtensionEnum::class)],
+            'convert_format' => ['required', new Enum(FileExtensionEnum::class)],
         ];
     }
 }

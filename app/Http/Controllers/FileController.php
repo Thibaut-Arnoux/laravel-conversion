@@ -6,6 +6,7 @@ use App\Converter\IConverterService;
 use App\Enums\FileExtensionEnum;
 use App\Http\Requests\ConvertFileRequest;
 use App\Http\Requests\UploadFileRequest;
+use App\Http\Resources\ConversionResource;
 use App\Http\Resources\FileCollection;
 use App\Http\Resources\FileResource;
 use App\Models\File;
@@ -65,14 +66,15 @@ class FileController extends Controller
     //     //
     // }
 
-    public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService)
+    /**
+     * Convert file into another format specify in query parameter
+     */
+    public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService): JsonResponse
     {
-        $convertExtension = FileExtensionEnum::from($request->convert_extension);
+        $convertExtension = FileExtensionEnum::from($request->convert_format);
 
-        $converterService->convert($file, $convertExtension);
+        $conversion = $converterService->convert($file, $convertExtension);
 
-        // TODO : Convert file with factory
-
-        // TODO : Return convert resource
+        return $this->respondCreated(new ConversionResource($conversion));
     }
 }
