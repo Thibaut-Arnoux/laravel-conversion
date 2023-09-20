@@ -18,7 +18,6 @@ class ConverterServiceProvider extends ServiceProvider
             $file = request()->route('file');
 
             if ($file instanceof File) {
-                // extract file or uuid from request
                 return ConverterFactory::createConverter($file->extension);
             }
 
