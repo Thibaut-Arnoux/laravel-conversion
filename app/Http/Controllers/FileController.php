@@ -10,9 +10,10 @@ use App\Http\Resources\ConversionCollection;
 use App\Http\Resources\FileCollection;
 use App\Http\Resources\FileResource;
 use App\Models\File;
+use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileController extends Controller
 {
@@ -51,20 +52,12 @@ class FileController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     */
-    // public function update(Request $request, File $file)
-    // {
-    //     //
-    // }
-
-    /**
      * Remove the specified resource from storage.
      */
-    // public function destroy(File $file)
-    // {
-    //     //
-    // }
+    public function destroy(File $file): JsonResponse
+    {
+        throw new Exception('Not yet implemented');
+    }
 
     /**
      * Convert file into another format specify in query parameter
@@ -76,5 +69,13 @@ class FileController extends Controller
         $conversions = $converterService->convert($file, $convertExtension);
 
         return $this->respondCreated(new ConversionCollection($conversions));
+    }
+
+    /**
+     * Download the specified resource.
+     */
+    public function download(File $file): StreamedResponse
+    {
+        return Storage::download($file->path, $file->name.'.'.$file->extension->value);
     }
 }
