@@ -18,11 +18,11 @@ class ImageConverterService implements IConverterService
      *
      * @param  File  $file The file to be converted.
      * @param  FileExtensionEnum  $convertExtension The extension to convert the file to.
-     * @return Conversion Returns the Conversion object representing the conversion.
+     * @return Conversion[] Return list of conversions.
      *
      * @throws Exception Throws an exception if no conversion is required for the specified extension.
      */
-    public function convert(File $file, FileExtensionEnum $convertExtension): Conversion
+    public function convert(File $file, FileExtensionEnum $convertExtension): array
     {
         // prepare paths
         $temporaryDirectory = (new TemporaryDirectory())->create();
@@ -30,7 +30,7 @@ class ImageConverterService implements IConverterService
 
         // convert file
         match ($convertExtension->value) {
-            'jpg', 'jpeg', 'png' => throw new Exception('No conversion required'),
+            'jpg', 'jpeg', 'png' => $this->toImg(Storage::path($file->path), $convertPath),
             'pdf' => $this->toPdf(Storage::path($file->path), $convertPath),
         };
 
@@ -40,6 +40,7 @@ class ImageConverterService implements IConverterService
         Storage::putFileAs('', $convertHttpFile, $convertHashPath);
         $temporaryDirectory->delete();
 
+        // TODO : Move to conversion save action
         return DB::transaction(function () use ($file, $convertHashPath, $convertExtension) {
             // save converted file on db
             $convertFile = new File();
@@ -54,8 +55,13 @@ class ImageConverterService implements IConverterService
             $conversion->convertFile()->associate($convertFile);
             $conversion->save();
 
-            return $conversion;
+            return [$conversion];
         });
+    }
+
+    public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void
+    {
+        throw new Exception('No conversion required');
     }
 
     /**
@@ -66,7 +72,7 @@ class ImageConverterService implements IConverterService
      *
      * @throws Exception If there is an error during the conversion process.
      */
-    private function toPdf(string $inputPath, string $outputPath): void
+    public function toPdf(string $inputPath, string $outputPath): void
     {
         try {
             $pdf = new \Imagick($inputPath);

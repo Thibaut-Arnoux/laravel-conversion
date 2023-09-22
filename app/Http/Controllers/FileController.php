@@ -6,7 +6,7 @@ use App\Converter\IConverterService;
 use App\Enums\FileExtensionEnum;
 use App\Http\Requests\ConvertFileRequest;
 use App\Http\Requests\UploadFileRequest;
-use App\Http\Resources\ConversionResource;
+use App\Http\Resources\ConversionCollection;
 use App\Http\Resources\FileCollection;
 use App\Http\Resources\FileResource;
 use App\Models\File;
@@ -73,8 +73,8 @@ class FileController extends Controller
     {
         $convertExtension = FileExtensionEnum::from($request->convert_format);
 
-        $conversion = $converterService->convert($file, $convertExtension);
+        $conversions = $converterService->convert($file, $convertExtension);
 
-        return $this->respondCreated(new ConversionResource($conversion));
+        return $this->respondCreated(new ConversionCollection($conversions));
     }
 }

@@ -8,5 +8,12 @@ use App\Models\File;
 
 interface IConverterService
 {
-    public function convert(File $file, FileExtensionEnum $convertExtension): Conversion;
+    /**
+     * @return Conversion[]
+     */
+    public function convert(File $file, FileExtensionEnum $convertExtension): array;
+
+    public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void;
+
+    public function toPdf(string $inputPath, string $outputPath): void;
 }
