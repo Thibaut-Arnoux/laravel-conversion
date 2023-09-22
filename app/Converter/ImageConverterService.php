@@ -7,19 +7,20 @@ use App\Models\Conversion;
 use App\Models\File;
 use Exception;
 use Illuminate\Http\File as HttpFile;
+use Illuminate\Support\Facades\DB;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Storage;
 
 class ImageConverterService implements IConverterService
 {
     /**
-     * Converts a file to a specified extension and saves it.
+     * Convert the given file to the specified extension and save it.
      *
      * @param  File  $file The file to be converted.
      * @param  FileExtensionEnum  $convertExtension The extension to convert the file to.
-     * @return Conversion The conversion object that represents the converted file.
+     * @return Conversion Returns the Conversion object representing the conversion.
      *
-     * @throws Exception When no conversion is required for the given extension.
+     * @throws Exception Throws an exception if no conversion is required for the specified extension.
      */
     public function convert(File $file, FileExtensionEnum $convertExtension): Conversion
     {
@@ -39,21 +40,22 @@ class ImageConverterService implements IConverterService
         Storage::putFileAs('', $convertHttpFile, $convertHashPath);
         $temporaryDirectory->delete();
 
-        // save converted file on db
-        // TODO : Commit file only when Conversion is saved
-        $convertFile = new File();
-        $convertFile->name = $file->name;
-        $convertFile->path = $convertHashPath;
-        $convertFile->extension = $convertExtension;
-        $convertFile->save();
+        return DB::transaction(function () use ($file, $convertHashPath, $convertExtension) {
+            // save converted file on db
+            $convertFile = new File();
+            $convertFile->name = $file->name;
+            $convertFile->path = $convertHashPath;
+            $convertFile->extension = $convertExtension;
+            $convertFile->save();
 
-        // save conversion
-        $conversion = new Conversion();
-        $conversion->originalFile()->associate($file);
-        $conversion->convertFile()->associate($convertFile);
-        $conversion->save();
+            // save conversion
+            $conversion = new Conversion();
+            $conversion->originalFile()->associate($file);
+            $conversion->convertFile()->associate($convertFile);
+            $conversion->save();
 
-        return $conversion;
+            return $conversion;
+        });
     }
 
     /**
