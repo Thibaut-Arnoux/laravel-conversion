@@ -23,6 +23,7 @@ class PdfConverterService implements IConverterService
             'pdf' => $this->toPdf(Storage::path($file->path), $temporaryDirectory->path($file->name.'.'.$convertExtension->value)),
         };
 
+        // parse temporary foldet to get all converted files
         $convertPaths = glob($temporaryDirectory->path().'/*.'.$convertExtension->value);
         if ($convertPaths === false) {
             throw new Exception('No conversion files found');
@@ -30,16 +31,18 @@ class PdfConverterService implements IConverterService
 
         $conversions = [];
         foreach ($convertPaths as $convertPath) {
+            // save converted file on disk
             $convertHttpFile = new HttpFile($convertPath);
-            $convertHashPath = $convertHttpFile->hashName();
-            Storage::putFileAs('', $convertHttpFile, $convertHashPath);
+            $convertName = pathinfo($convertPath, PATHINFO_FILENAME);
+            $convertPath = $convertHttpFile->hashName();
+            Storage::putFileAs('', $convertHttpFile, $convertPath);
 
             // TODO : Move to conversion save action
-            $conversions[] = DB::transaction(function () use ($file, $convertHashPath, $convertExtension) {
+            $conversions[] = DB::transaction(function () use ($file, $convertName, $convertPath, $convertExtension) {
                 // save converted file on db
                 $convertFile = new File();
-                $convertFile->name = $file->name;
-                $convertFile->path = $convertHashPath;
+                $convertFile->name = $convertName;
+                $convertFile->path = $convertPath;
                 $convertFile->extension = $convertExtension;
                 $convertFile->save();
 

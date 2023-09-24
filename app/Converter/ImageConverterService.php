@@ -36,16 +36,16 @@ class ImageConverterService implements IConverterService
 
         // save converted file on disk
         $convertHttpFile = new HttpFile($convertPath);
-        $convertHashPath = $convertHttpFile->hashName();
-        Storage::putFileAs('', $convertHttpFile, $convertHashPath);
-        $temporaryDirectory->delete();
+        $convertName = pathinfo($convertPath, PATHINFO_FILENAME);
+        $convertPath = $convertHttpFile->hashName();
+        Storage::putFileAs('', $convertHttpFile, $convertPath);
 
         // TODO : Move to conversion save action
-        return DB::transaction(function () use ($file, $convertHashPath, $convertExtension) {
+        $conversion = DB::transaction(function () use ($file, $convertName, $convertPath, $convertExtension) {
             // save converted file on db
             $convertFile = new File();
-            $convertFile->name = $file->name;
-            $convertFile->path = $convertHashPath;
+            $convertFile->name = $convertName;
+            $convertFile->path = $convertPath;
             $convertFile->extension = $convertExtension;
             $convertFile->save();
 
@@ -57,6 +57,9 @@ class ImageConverterService implements IConverterService
 
             return [$conversion];
         });
+        $temporaryDirectory->delete();
+
+        return $conversion;
     }
 
     public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void
