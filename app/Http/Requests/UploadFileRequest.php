@@ -25,7 +25,7 @@ class UploadFileRequest extends FormRequest
         $fileExtensions = array_column(FileExtensionEnum::cases(), 'value');
 
         return [
-            'file' => ['required', 'file', 'mimes:'.implode(',', $fileExtensions)],
+            'file' => ['required', 'file', 'max:2048', 'mimes:'.implode(',', $fileExtensions)],
             'name' => ['required', 'max:255'],
         ];
     }
