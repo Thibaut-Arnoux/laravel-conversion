@@ -26,12 +26,14 @@ class ImageConverterService implements IConverterService
     {
         // prepare paths
         $temporaryDirectory = (new TemporaryDirectory())->create();
+        $inputPath = Storage::path($file->path);
         $convertPath = $temporaryDirectory->path($file->name.'.'.$convertExtension->value);
 
         // convert file
         match ($convertExtension->value) {
-            'jpg', 'jpeg', 'png' => $this->toImg(Storage::path($file->path), $convertPath),
-            'pdf' => $this->toPdf(Storage::path($file->path), $convertPath),
+            'jpg', 'jpeg', 'png' => $this->toImg($inputPath, $convertPath),
+            'pdf' => $this->toPdf($inputPath, $convertPath),
+            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $convertPath),
         };
 
         // save converted file on disk
@@ -62,6 +64,9 @@ class ImageConverterService implements IConverterService
         return $conversion;
     }
 
+    /**
+     * @throws Exception No conversion required.
+     */
     public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void
     {
         throw new Exception('No conversion required');
@@ -84,5 +89,18 @@ class ImageConverterService implements IConverterService
         } catch (Exception $e) {
             throw new Exception('Failed to convert img to pdf: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Converts an image to doc format.
+     *
+     * @param  string  $inputPath The input file path.
+     * @param  string  $outputPath The output file path.
+     *
+     * @throws Exception Not yet implemented
+     */
+    public function toDoc(string $inputPath, string $outputPath): void
+    {
+        throw new Exception('Not yet implemented');
     }
 }

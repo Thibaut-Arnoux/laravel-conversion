@@ -17,10 +17,12 @@ class PdfConverterService implements IConverterService
     public function convert(File $file, FileExtensionEnum $convertExtension): array
     {
         $temporaryDirectory = (new TemporaryDirectory())->create();
+        $inputPath = Storage::path($file->path);
+        $outputPath = $temporaryDirectory->path($file->name.'.'.$convertExtension->value);
 
         match ($convertExtension->value) {
             'jpg', 'jpeg', 'png' => $this->convertImg($file, $temporaryDirectory, $convertExtension),
-            'pdf' => $this->toPdf(Storage::path($file->path), $temporaryDirectory->path($file->name.'.'.$convertExtension->value)),
+            'pdf' => $this->toPdf($inputPath, $outputPath),
         };
 
         // parse temporary foldet to get all converted files
@@ -71,6 +73,15 @@ class PdfConverterService implements IConverterService
         }
     }
 
+    /**
+     * Converts a PDF file to an image file.
+     *
+     * @param  string  $inputPath The path of the PDF file to convert.
+     * @param  string  $outputPath The path where the converted image file should be saved.
+     * @param  int  $pageNumber The page number of the PDF file to convert. Default is 1.
+     *
+     * @throws Exception If failed to convert the PDF file to an image.
+     */
     public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void
     {
         try {
@@ -82,6 +93,9 @@ class PdfConverterService implements IConverterService
         }
     }
 
+    /**
+     * @throws Exception No conversion is required.
+     */
     public function toPdf(string $inputPath, string $outputPath): void
     {
         throw new Exception('No conversion required');

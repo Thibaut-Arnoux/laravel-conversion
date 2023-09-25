@@ -11,6 +11,7 @@ class ConverterFactory
         return match ($extension->value) {
             'jpg', 'jpeg', 'png' => new ImageConverterService(),
             'pdf' => new PdfConverterService(),
+            'docx', 'doc', 'odt' => new DocConverterService(),
         };
     }
 }
