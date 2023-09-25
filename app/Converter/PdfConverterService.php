@@ -9,6 +9,7 @@ use DB;
 use Exception;
 use Illuminate\Http\File as HttpFile;
 use Illuminate\Support\Facades\Storage;
+use Process;
 use Spatie\PdfToImage\Pdf;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 
@@ -23,6 +24,7 @@ class PdfConverterService implements IConverterService
         match ($convertExtension->value) {
             'jpg', 'jpeg', 'png' => $this->convertImg($file, $temporaryDirectory, $convertExtension),
             'pdf' => $this->toPdf($inputPath, $outputPath),
+            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $outputPath),
         };
 
         // parse temporary foldet to get all converted files
@@ -99,5 +101,31 @@ class PdfConverterService implements IConverterService
     public function toPdf(string $inputPath, string $outputPath): void
     {
         throw new Exception('No conversion required');
+    }
+
+    /**
+     * Converts a PDF file to doc format.
+     *
+     * @param  string  $inputPath The input file path.
+     * @param  string  $outputPath The output file path.
+     *
+     * @throws Exception Not yet implemented
+     */
+    public function toDoc(string $inputPath, string $outputPath): void
+    {
+        $fileInfo = pathinfo($outputPath);
+        $extension = $fileInfo['extension'] ?? 'docx';
+        $dirname = $fileInfo['dirname'] ?? '';
+
+        if (! $dirname) {
+            throw new Exception('Invalid path during pdf conversion to doc');
+        }
+
+        $command = "soffice --headless --infilter=\"writer_pdf_import\" --convert-to $extension --outdir \"$dirname\" \"$inputPath\"";
+        $result = Process::run($command);
+
+        if ($result->failed()) {
+            throw new Exception('Failed to convert pdf to doc: '.$result->errorOutput());
+        }
     }
 }
