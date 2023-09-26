@@ -24,21 +24,23 @@ class ImageConverterService implements IConverterService
      */
     public function convert(File $file, FileExtensionEnum $convertExtension): array
     {
-        // prepare paths
-        $temporaryDirectory = (new TemporaryDirectory())->create();
-        $inputPath = Storage::path($file->path);
-        $convertPath = $temporaryDirectory->path($file->name.'.'.$convertExtension->value);
-
         // convert file
-        match ($convertExtension->value) {
-            'jpg', 'jpeg', 'png' => $this->toImg($inputPath, $convertPath),
-            'pdf' => $this->toPdf($inputPath, $convertPath),
-            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $convertPath),
+        $inputPath = Storage::path($file->path);
+        $extension = $convertExtension->value;
+        $convertPaths = match ($extension) {
+            'jpg', 'jpeg', 'png' => $this->toImg($inputPath, $extension),
+            'pdf' => $this->toPdf($inputPath),
+            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $extension),
         };
 
+        if (count($convertPaths) !== 1) {
+            throw new Exception('Unexpected output for image conversion');
+        }
+
         // save converted file on disk
+        $convertPath = $convertPaths[0];
         $convertHttpFile = new HttpFile($convertPath);
-        $convertName = pathinfo($convertPath, PATHINFO_FILENAME);
+        $convertName = $file->name;
         $convertPath = $convertHttpFile->hashName();
         Storage::putFileAs('', $convertHttpFile, $convertPath);
 
@@ -59,7 +61,6 @@ class ImageConverterService implements IConverterService
 
             return [$conversion];
         });
-        $temporaryDirectory->delete();
 
         return $conversion;
     }
@@ -67,21 +68,24 @@ class ImageConverterService implements IConverterService
     /**
      * @throws Exception No conversion required.
      */
-    public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void
+    public function toImg(string $inputPath, string $extension = 'png'): array
     {
         throw new Exception('No conversion required');
     }
 
     /**
-     * Converts an image file to PDF format.
+     * Convert an Image file to PDF format.
      *
      * @param  string  $inputPath The path to the input image file.
-     * @param  string  $outputPath The path to save the output PDF file.
      *
      * @throws Exception If there is an error during the conversion process.
      */
-    public function toPdf(string $inputPath, string $outputPath): void
+    public function toPdf(string $inputPath): array
     {
+        $temporaryDirectory = (new TemporaryDirectory())->create();
+        $inputFilename = pathinfo($inputPath, PATHINFO_FILENAME);
+        $outputPath = $temporaryDirectory->path($inputFilename.'.'.FileExtensionEnum::PDF->value);
+
         try {
             $pdf = new \Imagick($inputPath);
             $pdf->setImageFormat('pdf');
@@ -89,17 +93,24 @@ class ImageConverterService implements IConverterService
         } catch (Exception $e) {
             throw new Exception('Failed to convert img to pdf: '.$e->getMessage());
         }
+
+        $convertPaths = glob($temporaryDirectory->path().'/*.'.FileExtensionEnum::PDF->value);
+        if ($convertPaths === false) {
+            throw new Exception('No conversion files found');
+        }
+
+        return $convertPaths;
     }
 
     /**
-     * Converts an image to doc format.
+     * Convert an Image file to Doc format.
      *
      * @param  string  $inputPath The input file path.
-     * @param  string  $outputPath The output file path.
+     * @param  string  $extension The output extension.
      *
      * @throws Exception Not yet implemented
      */
-    public function toDoc(string $inputPath, string $outputPath): void
+    public function toDoc(string $inputPath, string $extension = 'odt'): array
     {
         throw new Exception('Not yet implemented');
     }

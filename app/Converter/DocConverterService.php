@@ -16,65 +16,71 @@ class DocConverterService implements IConverterService
 {
     public function convert(File $file, FileExtensionEnum $convertExtension): array
     {
-        // prepare paths
-        $temporaryDirectory = (new TemporaryDirectory())->create();
-        $inputPath = Storage::path($file->path);
-        $filename = pathinfo($inputPath, PATHINFO_FILENAME);
-        $convertPath = $temporaryDirectory->path($filename.'.'.$convertExtension->value);
-
         // convert file
-        match ($convertExtension->value) {
-            'jpg', 'jpeg', 'png' => $this->toImg($inputPath, $convertPath),
-            'pdf' => $this->toPdf($inputPath, $convertPath),
-            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $convertPath),
+        $inputPath = Storage::path($file->path);
+        $extension = $convertExtension->value;
+        $convertPaths = match ($extension) {
+            'jpg', 'jpeg', 'png' => $this->toImg($inputPath, $extension),
+            'pdf' => $this->toPdf($inputPath),
+            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $extension),
         };
 
-        // save converted file on disk
-        $convertHttpFile = new HttpFile($convertPath);
-        $convertName = pathinfo($convertPath, PATHINFO_FILENAME);
-        $convertPath = $convertHttpFile->hashName();
-        Storage::putFileAs('', $convertHttpFile, $convertPath);
+        $conversions = [];
+        $convertPathsLength = count($convertPaths);
+        for ($i = 0; $i < $convertPathsLength; $i++) {
+            // save converted file on disk
+            $convertPath = $convertPaths[$i];
+            $convertHttpFile = new HttpFile($convertPath);
+            $convertName = count($convertPaths) === 1 ? $file->name : $file->name.'-'.$i;
+            $convertPath = $convertHttpFile->hashName();
+            Storage::putFileAs('', $convertHttpFile, $convertPath);
 
-        // TODO : Move to conversion save action
-        $conversion = DB::transaction(function () use ($file, $convertName, $convertPath, $convertExtension) {
-            // save converted file on db
-            $convertFile = new File();
-            $convertFile->name = $convertName;
-            $convertFile->path = $convertPath;
-            $convertFile->extension = $convertExtension;
-            $convertFile->save();
+            // TODO : Move to conversion save action
+            $conversions[] = DB::transaction(function () use ($file, $convertName, $convertPath, $convertExtension) {
+                // save converted file on db
+                $convertFile = new File();
+                $convertFile->name = $convertName;
+                $convertFile->path = $convertPath;
+                $convertFile->extension = $convertExtension;
+                $convertFile->save();
 
-            // save conversion
-            $conversion = new Conversion();
-            $conversion->originalFile()->associate($file);
-            $conversion->convertFile()->associate($convertFile);
-            $conversion->save();
+                // save conversion
+                $conversion = new Conversion();
+                $conversion->originalFile()->associate($file);
+                $conversion->convertFile()->associate($convertFile);
+                $conversion->save();
 
-            return [$conversion];
-        });
-        $temporaryDirectory->delete();
+                return $conversion;
+            });
+        }
 
-        return $conversion;
+        return $conversions;
     }
 
-    public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void
+    /**
+     * Convert a Doc to Image format.
+     *
+     * @param  string  $inputPath The input file path.
+     * @param  string  $extension The output extension.
+     *
+     * @throws Exception Not yet implemented
+     */
+    public function toImg(string $inputPath, string $extension = 'png'): array
     {
         throw new Exception('Not yet implemented');
     }
 
     /**
-     * Converts a Doc file to PDF format.
+     * Convert a Doc file to PDF format.
      *
      * @param  string  $inputPath The input file path.
-     * @param  string  $outputPath The output file path.
      *
-     * @throws Exception If failed to convert the doc file to a PDF.
+     * @throws Exception If failed to convert the file to a PDF.
      */
-    public function toPdf(string $inputPath, string $outputPath): void
+    public function toPdf(string $inputPath): array
     {
-        // Care output path will be override by soffice cli
-        $fileInfo = pathinfo($outputPath);
-        $dirname = $fileInfo['dirname'] ?? '';
+        $temporaryDirectory = (new TemporaryDirectory())->create();
+        $dirname = $temporaryDirectory->path();
 
         if (! $dirname) {
             throw new Exception('Invalid path during pdf conversion to doc');
@@ -86,12 +92,19 @@ class DocConverterService implements IConverterService
         if ($result->failed()) {
             throw new Exception('Failed to convert pdf to doc: '.$result->errorOutput());
         }
+
+        $convertPaths = glob($dirname.'/*.'.FileExtensionEnum::PDF->value);
+        if ($convertPaths === false) {
+            throw new Exception('No conversion files found');
+        }
+
+        return $convertPaths;
     }
 
     /**
      * @throws Exception No conversion is required.
      */
-    public function toDoc(string $inputPath, string $outputPath): void
+    public function toDoc(string $inputPath, string $extension = 'odt'): array
     {
         throw new Exception('No conversion required');
     }

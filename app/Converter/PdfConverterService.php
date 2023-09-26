@@ -17,27 +17,22 @@ class PdfConverterService implements IConverterService
 {
     public function convert(File $file, FileExtensionEnum $convertExtension): array
     {
-        $temporaryDirectory = (new TemporaryDirectory())->create();
+        // convert file
         $inputPath = Storage::path($file->path);
-        $outputPath = $temporaryDirectory->path($file->name.'.'.$convertExtension->value);
-
-        match ($convertExtension->value) {
-            'jpg', 'jpeg', 'png' => $this->convertImg($file, $temporaryDirectory, $convertExtension),
-            'pdf' => $this->toPdf($inputPath, $outputPath),
-            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $outputPath),
+        $extension = $convertExtension->value;
+        $convertPaths = match ($extension) {
+            'jpg', 'jpeg', 'png' => $this->toImg($inputPath, $extension),
+            'pdf' => $this->toPdf($inputPath),
+            'docx', 'doc', 'odt' => $this->toDoc($inputPath, $extension),
         };
 
-        // parse temporary foldet to get all converted files
-        $convertPaths = glob($temporaryDirectory->path().'/*.'.$convertExtension->value);
-        if ($convertPaths === false) {
-            throw new Exception('No conversion files found');
-        }
-
         $conversions = [];
-        foreach ($convertPaths as $convertPath) {
+        $convertPathsLength = count($convertPaths);
+        for ($i = 0; $i < $convertPathsLength; $i++) {
             // save converted file on disk
+            $convertPath = $convertPaths[$i];
             $convertHttpFile = new HttpFile($convertPath);
-            $convertName = pathinfo($convertPath, PATHINFO_FILENAME);
+            $convertName = count($convertPaths) === 1 ? $file->name : $file->name.'-'.$i;
             $convertPath = $convertHttpFile->hashName();
             Storage::putFileAs('', $convertHttpFile, $convertPath);
 
@@ -59,64 +54,63 @@ class PdfConverterService implements IConverterService
                 return $conversion;
             });
         }
-        $temporaryDirectory->delete();
 
         return $conversions;
     }
 
-    public function convertImg(File $file, TemporaryDirectory $outputTempFolder, FileExtensionEnum $convertExtension): void
-    {
-        $pdfPath = Storage::path($file->path);
-        $nbPages = (new Pdf($pdfPath))->getNumberOfPages();
-
-        for ($i = 0; $i < $nbPages; $i++) {
-            $convertPath = $outputTempFolder->path($file->name.'-'.$i.'.'.$convertExtension->value);
-            $this->toImg($pdfPath, $convertPath, $i + 1);
-        }
-    }
-
     /**
-     * Converts a PDF file to an image file.
+     * Convert a PDF file to an Image format.
      *
      * @param  string  $inputPath The path of the PDF file to convert.
-     * @param  string  $outputPath The path where the converted image file should be saved.
-     * @param  int  $pageNumber The page number of the PDF file to convert. Default is 1.
+     * @param  string  $extension The output extension.
      *
-     * @throws Exception If failed to convert the PDF file to an image.
+     * @throws Exception If failed to convert the file to an image.
      */
-    public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void
+    public function toImg(string $inputPath, string $extension = 'png'): array
     {
-        try {
-            $pdf = new Pdf($inputPath);
-            $pdf->setPage($pageNumber)
-                ->saveImage($outputPath);
-        } catch (Exception $e) {
-            throw new Exception('Failed to convert pdf to img: '.$e->getMessage());
+        $temporaryDirectory = (new TemporaryDirectory())->create();
+        $inputFilename = pathinfo($inputPath, PATHINFO_FILENAME);
+        $pdf = new Pdf($inputPath);
+        $nbPages = $pdf->getNumberOfPages();
+
+        for ($i = 0; $i < $nbPages; $i++) {
+            try {
+                $outputPath = $temporaryDirectory->path($inputFilename.'-'.$i.'.'.$extension);
+                $pdf->setPage($i + 1)
+                    ->saveImage($outputPath);
+            } catch (Exception $e) {
+                throw new Exception('Failed to convert pdf to img: '.$e->getMessage());
+            }
         }
+
+        $convertPaths = glob($temporaryDirectory->path().'/*.'.$extension);
+        if ($convertPaths === false) {
+            throw new Exception('No conversion files found');
+        }
+
+        return $convertPaths;
     }
 
     /**
      * @throws Exception No conversion is required.
      */
-    public function toPdf(string $inputPath, string $outputPath): void
+    public function toPdf(string $inputPath): array
     {
         throw new Exception('No conversion required');
     }
 
     /**
-     * Converts a PDF file to doc format.
+     * Convert a PDF file to a Doc format.
      *
      * @param  string  $inputPath The input file path.
-     * @param  string  $outputPath The output file path.
+     * @param  string  $extension The output extension.
      *
      * @throws Exception If failed to convert the PDF file to doc.
      */
-    public function toDoc(string $inputPath, string $outputPath): void
+    public function toDoc(string $inputPath, string $extension = 'odt'): array
     {
-        // Care output path will be override by soffice cli
-        $fileInfo = pathinfo($outputPath);
-        $extension = $fileInfo['extension'] ?? 'docx';
-        $dirname = $fileInfo['dirname'] ?? '';
+        $temporaryDirectory = (new TemporaryDirectory())->create();
+        $dirname = $temporaryDirectory->path();
 
         if (! $dirname) {
             throw new Exception('Invalid path during pdf conversion to doc');
@@ -128,5 +122,12 @@ class PdfConverterService implements IConverterService
         if ($result->failed()) {
             throw new Exception('Failed to convert pdf to doc: '.$result->errorOutput());
         }
+
+        $convertPaths = glob($dirname.'/*.'.$extension);
+        if ($convertPaths === false) {
+            throw new Exception('No conversion files found');
+        }
+
+        return $convertPaths;
     }
 }

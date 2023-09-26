@@ -13,9 +13,18 @@ interface IConverterService
      */
     public function convert(File $file, FileExtensionEnum $convertExtension): array;
 
-    public function toImg(string $inputPath, string $outputPath, int $pageNumber = 1): void;
+    /**
+     * @return string[]
+     */
+    public function toImg(string $inputPath, string $extension = 'png'): array;
 
-    public function toPdf(string $inputPath, string $outputPath): void;
+    /**
+     * @return string[]
+     */
+    public function toPdf(string $inputPath): array;
 
-    public function toDoc(string $inputPath, string $outputPath): void;
+    /**
+     * @return string[]
+     */
+    public function toDoc(string $inputPath, string $extension = 'odt'): array;
 }
