@@ -67,7 +67,17 @@ class DocConverterService implements IConverterService
      */
     public function toImg(string $inputPath, string $extension = 'png'): array
     {
-        throw new Exception('Not yet implemented');
+        $convertPaths = $this->toPdf($inputPath);
+        if (count($convertPaths) !== 1) {
+            throw new Exception('Unexpected output for odt conversion to pdf');
+        }
+        $convertPath = $convertPaths[0];
+        $intermediateExtension = pathinfo($convertPath, PATHINFO_EXTENSION);
+        $intermediateExtensionEnum = FileExtensionEnum::from($intermediateExtension);
+
+        $converter = ConverterFactory::createConverter($intermediateExtensionEnum);
+
+        return $converter->toImg($convertPath, $extension);
     }
 
     /**
