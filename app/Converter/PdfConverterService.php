@@ -109,10 +109,11 @@ class PdfConverterService implements IConverterService
      * @param  string  $inputPath The input file path.
      * @param  string  $outputPath The output file path.
      *
-     * @throws Exception Not yet implemented
+     * @throws Exception If failed to convert the PDF file to doc.
      */
     public function toDoc(string $inputPath, string $outputPath): void
     {
+        // Care output path will be override by soffice cli
         $fileInfo = pathinfo($outputPath);
         $extension = $fileInfo['extension'] ?? 'docx';
         $dirname = $fileInfo['dirname'] ?? '';
