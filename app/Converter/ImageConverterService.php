@@ -13,6 +13,11 @@ use Storage;
 
 class ImageConverterService implements IConverterService
 {
+    public function __construct(
+        public TemporaryDirectory $temporaryDirectory
+    ) {
+    }
+
     /**
      * Convert the given file to the specified extension and save it.
      *
@@ -38,8 +43,8 @@ class ImageConverterService implements IConverterService
         }
 
         // save converted file on disk
-        $convertPath = $convertPaths[0];
-        $convertHttpFile = new HttpFile($convertPath);
+        $convertedPath = $convertPaths[0];
+        $convertHttpFile = new HttpFile($convertedPath);
         $convertName = $file->name;
         $convertPath = $convertHttpFile->hashName();
         Storage::putFileAs('', $convertHttpFile, $convertPath);
@@ -61,6 +66,7 @@ class ImageConverterService implements IConverterService
 
             return [$conversion];
         });
+        $this->temporaryDirectory->delete();
 
         return $conversion;
     }
@@ -82,9 +88,8 @@ class ImageConverterService implements IConverterService
      */
     public function toPdf(string $inputPath): array
     {
-        $temporaryDirectory = (new TemporaryDirectory())->create();
         $inputFilename = pathinfo($inputPath, PATHINFO_FILENAME);
-        $outputPath = $temporaryDirectory->path($inputFilename.'.'.FileExtensionEnum::PDF->value);
+        $outputPath = $this->temporaryDirectory->path($inputFilename.'.'.FileExtensionEnum::PDF->value);
 
         try {
             $pdf = new \Imagick($inputPath);
@@ -94,7 +99,7 @@ class ImageConverterService implements IConverterService
             throw new Exception('Failed to convert img to pdf: '.$e->getMessage());
         }
 
-        $convertPaths = glob($temporaryDirectory->path().'/*.'.FileExtensionEnum::PDF->value);
+        $convertPaths = glob($this->temporaryDirectory->path().'/*.'.FileExtensionEnum::PDF->value);
         if ($convertPaths === false) {
             throw new Exception('No conversion files found');
         }

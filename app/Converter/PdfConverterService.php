@@ -15,6 +15,11 @@ use Spatie\TemporaryDirectory\TemporaryDirectory;
 
 class PdfConverterService implements IConverterService
 {
+    public function __construct(
+        public TemporaryDirectory $temporaryDirectory
+    ) {
+    }
+
     public function convert(File $file, FileExtensionEnum $convertExtension): array
     {
         // convert file
@@ -30,8 +35,8 @@ class PdfConverterService implements IConverterService
         $convertPathsLength = count($convertPaths);
         for ($i = 0; $i < $convertPathsLength; $i++) {
             // save converted file on disk
-            $convertPath = $convertPaths[$i];
-            $convertHttpFile = new HttpFile($convertPath);
+            $convertedPath = $convertPaths[$i];
+            $convertHttpFile = new HttpFile($convertedPath);
             $convertName = count($convertPaths) === 1 ? $file->name : $file->name.'-'.$i;
             $convertPath = $convertHttpFile->hashName();
             Storage::putFileAs('', $convertHttpFile, $convertPath);
@@ -54,6 +59,7 @@ class PdfConverterService implements IConverterService
                 return $conversion;
             });
         }
+        $this->temporaryDirectory->delete();
 
         return $conversions;
     }
@@ -68,14 +74,13 @@ class PdfConverterService implements IConverterService
      */
     public function toImg(string $inputPath, string $extension = 'png'): array
     {
-        $temporaryDirectory = (new TemporaryDirectory())->create();
         $inputFilename = pathinfo($inputPath, PATHINFO_FILENAME);
         $pdf = new Pdf($inputPath);
         $nbPages = $pdf->getNumberOfPages();
 
         for ($i = 0; $i < $nbPages; $i++) {
             try {
-                $outputPath = $temporaryDirectory->path($inputFilename.'-'.$i.'.'.$extension);
+                $outputPath = $this->temporaryDirectory->path($inputFilename.'-'.$i.'.'.$extension);
                 $pdf->setPage($i + 1)
                     ->saveImage($outputPath);
             } catch (Exception $e) {
@@ -83,7 +88,7 @@ class PdfConverterService implements IConverterService
             }
         }
 
-        $convertPaths = glob($temporaryDirectory->path().'/*.'.$extension);
+        $convertPaths = glob($this->temporaryDirectory->path().'/*.'.$extension);
         if ($convertPaths === false) {
             throw new Exception('No conversion files found');
         }
@@ -109,8 +114,7 @@ class PdfConverterService implements IConverterService
      */
     public function toDoc(string $inputPath, string $extension = 'odt'): array
     {
-        $temporaryDirectory = (new TemporaryDirectory())->create();
-        $dirname = $temporaryDirectory->path();
+        $dirname = $this->temporaryDirectory->path();
 
         if (! $dirname) {
             throw new Exception('Invalid path during pdf conversion to doc');

@@ -14,6 +14,11 @@ use Storage;
 
 class DocConverterService implements IConverterService
 {
+    public function __construct(
+        public TemporaryDirectory $temporaryDirectory
+    ) {
+    }
+
     public function convert(File $file, FileExtensionEnum $convertExtension): array
     {
         // convert file
@@ -29,8 +34,8 @@ class DocConverterService implements IConverterService
         $convertPathsLength = count($convertPaths);
         for ($i = 0; $i < $convertPathsLength; $i++) {
             // save converted file on disk
-            $convertPath = $convertPaths[$i];
-            $convertHttpFile = new HttpFile($convertPath);
+            $convertedPath = $convertPaths[$i];
+            $convertHttpFile = new HttpFile($convertedPath);
             $convertName = count($convertPaths) === 1 ? $file->name : $file->name.'-'.$i;
             $convertPath = $convertHttpFile->hashName();
             Storage::putFileAs('', $convertHttpFile, $convertPath);
@@ -53,6 +58,7 @@ class DocConverterService implements IConverterService
                 return $conversion;
             });
         }
+        $this->temporaryDirectory->delete();
 
         return $conversions;
     }
@@ -89,8 +95,7 @@ class DocConverterService implements IConverterService
      */
     public function toPdf(string $inputPath): array
     {
-        $temporaryDirectory = (new TemporaryDirectory())->create();
-        $dirname = $temporaryDirectory->path();
+        $dirname = $this->temporaryDirectory->path();
 
         if (! $dirname) {
             throw new Exception('Invalid path during pdf conversion to doc');

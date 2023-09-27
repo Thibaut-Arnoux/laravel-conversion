@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Spatie\TemporaryDirectory\TemporaryDirectory;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +12,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(TemporaryDirectory::class, function () {
+            return (new TemporaryDirectory())->create();
+        });
     }
 
     /**

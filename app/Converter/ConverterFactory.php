@@ -9,9 +9,9 @@ class ConverterFactory
     public static function createConverter(FileExtensionEnum $extension): IConverterService
     {
         return match ($extension->value) {
-            'jpg', 'jpeg', 'png' => new ImageConverterService(),
-            'pdf' => new PdfConverterService(),
-            'docx', 'doc', 'odt' => new DocConverterService(),
+            'jpg', 'jpeg', 'png' => app()->make(ImageConverterService::class),
+            'pdf' => app()->make(PdfConverterService::class),
+            'docx', 'doc', 'odt' => app()->make(DocConverterService::class),
         };
     }
 }
