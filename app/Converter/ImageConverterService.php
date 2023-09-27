@@ -112,6 +112,16 @@ class ImageConverterService implements IConverterService
      */
     public function toDoc(string $inputPath, string $extension = 'odt'): array
     {
-        throw new Exception('Not yet implemented');
+        $convertPaths = $this->toPdf($inputPath);
+        if (count($convertPaths) !== 1) {
+            throw new Exception('Unexpected output for img conversion to pdf');
+        }
+        $convertPath = $convertPaths[0];
+        $intermediateExtension = (new HttpFile($convertPath))->extension();
+        $intermediateExtensionEnum = FileExtensionEnum::from($intermediateExtension);
+
+        $converter = ConverterFactory::createConverter($intermediateExtensionEnum);
+
+        return $converter->toDoc($convertPath, $extension);
     }
 }

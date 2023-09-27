@@ -72,7 +72,7 @@ class DocConverterService implements IConverterService
             throw new Exception('Unexpected output for odt conversion to pdf');
         }
         $convertPath = $convertPaths[0];
-        $intermediateExtension = pathinfo($convertPath, PATHINFO_EXTENSION);
+        $intermediateExtension = (new HttpFile($convertPath))->extension();
         $intermediateExtensionEnum = FileExtensionEnum::from($intermediateExtension);
 
         $converter = ConverterFactory::createConverter($intermediateExtensionEnum);
