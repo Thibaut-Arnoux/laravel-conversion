@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\FileController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,14 +15,21 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// oauth
+Route::prefix('auth')->as('auth.')->group(function () {
+    Route::post('/register', [App\Http\Controllers\AuthController::class, 'register'])->name('register');
+    Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])->name('login');
+    Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout')->middleware(['auth:sanctum']);
 });
 
-// files
-Route::apiResource('files', FileController::class)->except(['update']);
-Route::get('/files/{file}/convert', [FileController::class, 'convert'])->name('files.convert');
-Route::get('/files/{file}/download', [FileController::class, 'download'])->name('files.download');
+Route::middleware(['auth:sanctum'])->group(function () {
+    // files
+    Route::apiResource('files', FileController::class)->except(['update']);
+    Route::prefix('files')->as('files.')->group(function () {
+        Route::get('{file}/convert', [FileController::class, 'convert'])->name('convert');
+        Route::get('{file}/download', [FileController::class, 'download'])->name('download');
+    });
 
-// conversions
-Route::apiResource('conversions', ConversionController::class)->only(['index', 'show']);
+    // conversions
+    Route::apiResource('conversions', ConversionController::class)->only(['index', 'show']);
+});
