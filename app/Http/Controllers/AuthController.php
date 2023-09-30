@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    /**
+     * Register a user
+     */
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create($request->validated());
@@ -25,6 +28,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Log in a user
+     */
     public function login(LoginRequest $request): JsonResponse
     {
         if (! Auth::attempt($request->validated())) {
@@ -41,6 +47,9 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Log out a user
+     */
     public function logout(): JsonResponse
     {
         Auth::user()->tokens()->delete();

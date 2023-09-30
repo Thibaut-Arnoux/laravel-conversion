@@ -26,8 +26,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // files
     Route::apiResource('files', FileController::class)->except(['update']);
     Route::prefix('files')->as('files.')->group(function () {
-        Route::get('{file}/convert', [FileController::class, 'convert'])->name('convert');
-        Route::get('{file}/download', [FileController::class, 'download'])->name('download');
+        Route::get('/{file}/convert', [FileController::class, 'convert'])->name('convert');
+        Route::get('/{file}/download', [FileController::class, 'download'])->name('download');
     });
 
     // conversions
