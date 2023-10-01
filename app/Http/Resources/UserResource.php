@@ -2,27 +2,33 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\User
+ * @property-read User $resource
  */
 class UserResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
      *
-     * @return array<string, mixed>
+     * @return array{
+     * id: string,
+     * name: string,
+     * email: string,
+     * created_at: DateResource,
+     * updated_at: DateResource}
      */
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $this->resource->id,
+            'name' => $this->resource->name,
+            'email' => $this->resource->email,
+            'created_at' => new DateResource($this->resource->created_at),
+            'updated_at' => new DateResource($this->resource->updated_at),
         ];
     }
 }

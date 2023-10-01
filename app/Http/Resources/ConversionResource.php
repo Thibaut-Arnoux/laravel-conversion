@@ -2,28 +2,35 @@
 
 namespace App\Http\Resources;
 
-use Carbon\Carbon;
+use App\Models\Conversion;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Conversion
+ * @property-read Conversion $resource
  */
 class ConversionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
      *
-     * @return array{id: string, original_file_id: string, convert_file_id: string, created_at: Carbon|null, updated_at: Carbon|null}
+     * @return array{
+     * id: string,
+     * original_file: FileResource,
+     * convert_file: FileResource,
+     * created_by: UserResource,
+     * created_at: DateResource,
+     * updated_at: DateResource}
      */
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'original_file_id' => $this->original_file_id,
-            'convert_file_id' => $this->convert_file_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $this->resource->id,
+            'original_file' => new FileResource($this->whenLoaded('originalFile')),
+            'convert_file' => new FileResource($this->whenLoaded('convertFile')),
+            'created_by' => new UserResource($this->whenLoaded('user')),
+            'created_at' => new DateResource($this->resource->created_at),
+            'updated_at' => new DateResource($this->resource->updated_at),
         ];
     }
 }

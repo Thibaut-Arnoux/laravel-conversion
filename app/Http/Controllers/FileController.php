@@ -6,8 +6,7 @@ use App\Converter\IConverterService;
 use App\Enums\FileExtensionEnum;
 use App\Http\Requests\ConvertFileRequest;
 use App\Http\Requests\UploadFileRequest;
-use App\Http\Resources\ConversionCollection;
-use App\Http\Resources\FileCollection;
+use App\Http\Resources\ConversionResource;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use Exception;
@@ -22,7 +21,12 @@ class FileController extends Controller
      */
     public function index(): JsonResponse
     {
-        return $this->respondWithSuccess(new FileCollection(File::all()));
+        return $this->respondWithSuccess(
+            FileResource::collection(
+                File::query()
+                    ->get()
+            )
+        );
     }
 
     /**
@@ -49,7 +53,13 @@ class FileController extends Controller
      */
     public function show(File $file): JsonResponse
     {
-        return $this->respondWithSuccess(new FileResource($file));
+        $file->load('conversions');
+
+        return $this->respondWithSuccess(
+            new FileResource(
+                $file
+            )
+        );
     }
 
     /**
@@ -69,7 +79,7 @@ class FileController extends Controller
 
         $conversions = $converterService->convert($file, $convertExtension);
 
-        return $this->respondCreated(new ConversionCollection($conversions));
+        return $this->respondCreated(ConversionResource::collection($conversions));
     }
 
     /**

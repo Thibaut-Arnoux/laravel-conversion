@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\ConversionCollection;
 use App\Http\Resources\ConversionResource;
 use App\Models\Conversion;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +13,13 @@ class ConversionController extends Controller
      */
     public function index(): JsonResponse
     {
-        return $this->respondWithSuccess(new ConversionCollection(Conversion::all()));
+        return $this->respondWithSuccess(
+            ConversionResource::collection(
+                Conversion::query()
+                    ->with('originalFile', 'convertFile')
+                    ->get()
+            )
+        );
     }
 
     /**
