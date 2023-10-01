@@ -44,6 +44,15 @@
             "@php artisan ide-helper:generate",
             "@php artisan ide-helper:models -n"
         ],
+        "pint": [
+          "./vendor/bin/pint"
+        ],
+        "stan": [
+          "./vendor/bin/phpstan analyse --memory-limit=3g"
+        ],
+        "test": [
+          "@php artisan test"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
