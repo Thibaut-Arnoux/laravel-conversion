@@ -33,4 +33,14 @@ class Conversion extends Model
     {
         return $this->belongsTo(File::class, 'convert_file_id');
     }
+
+    /**
+     * Retrieves the user associated with this conversion.
+     *
+     * @return BelongsTo<User, self>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

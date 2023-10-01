@@ -38,6 +38,7 @@ class FileController extends Controller
         $file->name = $request->name;
         $file->path = $uploadFile->hashName();
         $file->extension = FileExtensionEnum::from($uploadFile->extension());
+        $file->user_id = $request->user()->id;
         $file->save();
 
         return $this->respondCreated(new FileResource($file));

@@ -7,6 +7,7 @@ use App\Models\Conversion;
 use App\Models\File;
 use Exception;
 use Illuminate\Http\File as HttpFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Storage;
@@ -51,17 +52,20 @@ class ImageConverterService implements IConverterService
 
         // TODO : Move to conversion save action
         $conversion = DB::transaction(function () use ($file, $convertName, $convertPath, $convertExtension) {
+            $userId = Auth::user()->id;
             // save converted file on db
             $convertFile = new File();
             $convertFile->name = $convertName;
             $convertFile->path = $convertPath;
             $convertFile->extension = $convertExtension;
+            $convertFile->user_id = $userId;
             $convertFile->save();
 
             // save conversion
             $conversion = new Conversion();
             $conversion->originalFile()->associate($file);
             $conversion->convertFile()->associate($convertFile);
+            $conversion->user_id = $userId;
             $conversion->save();
 
             return [$conversion];

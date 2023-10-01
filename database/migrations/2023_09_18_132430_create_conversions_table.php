@@ -13,9 +13,19 @@ return new class extends Migration
     {
         Schema::create('conversions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('original_file_id')->references('id')->on('files');
-            $table->foreignUuid('convert_file_id')->references('id')->on('files');
+
+            $table->foreignUuid('original_file_id')
+                ->index()
+                ->references('id')->on('files');
+            $table->foreignUuid('convert_file_id')
+                ->index()
+                ->references('id')->on('files');
+            $table->foreignUuid('user_id')
+                ->index()
+                ->constrained();
+
             $table->timestamps();
+
             $table->softDeletes();
         });
     }
