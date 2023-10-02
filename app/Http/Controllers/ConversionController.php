@@ -27,6 +27,8 @@ class ConversionController extends Controller
      */
     public function show(Conversion $conversion): JsonResponse
     {
+        $conversion->load(['originalFile', 'convertFile']);
+
         return $this->respondWithSuccess(new ConversionResource($conversion));
     }
 }
