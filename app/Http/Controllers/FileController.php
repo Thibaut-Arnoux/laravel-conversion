@@ -53,6 +53,8 @@ class FileController extends Controller
      */
     public function show(File $file): JsonResponse
     {
+        $this->authorize('view', $file);
+
         $file->load('conversions');
 
         return $this->respondWithSuccess(
@@ -67,6 +69,8 @@ class FileController extends Controller
      */
     public function destroy(File $file): JsonResponse
     {
+        $this->authorize('delete', $file);
+
         throw new Exception('Not yet implemented');
     }
 
@@ -75,8 +79,9 @@ class FileController extends Controller
      */
     public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService): JsonResponse
     {
-        $convertExtension = FileExtensionEnum::from($request->convert_format);
+        $this->authorize('convert', $file);
 
+        $convertExtension = FileExtensionEnum::from($request->convert_format);
         $conversions = $converterService->convert($file, $convertExtension);
 
         return $this->respondCreated(ConversionResource::collection($conversions));
@@ -87,6 +92,8 @@ class FileController extends Controller
      */
     public function download(File $file): StreamedResponse
     {
+        $this->authorize('download', $file);
+
         return Storage::download($file->path, $file->name.'.'.$file->extension->value);
     }
 }
