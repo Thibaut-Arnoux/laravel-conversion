@@ -10,6 +10,7 @@ use App\Http\Resources\ConversionResource;
 use App\Http\Resources\FileResource;
 use App\Models\File;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -18,11 +19,12 @@ class FileController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         return $this->respondWithSuccess(
             FileResource::collection(
                 File::query()
+                    ->whereUserId($request->user()->id)
                     ->get()
             )
         );
