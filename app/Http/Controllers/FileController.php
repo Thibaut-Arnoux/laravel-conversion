@@ -9,7 +9,6 @@ use App\Http\Requests\UploadFileRequest;
 use App\Http\Resources\ConversionResource;
 use App\Http\Resources\FileResource;
 use App\Models\File;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -71,7 +70,9 @@ class FileController extends Controller
     {
         $this->authorize('delete', $file);
 
-        throw new Exception('Not yet implemented');
+        $file->delete();
+
+        return $this->respondNoContent();
     }
 
     /**
