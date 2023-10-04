@@ -8,13 +8,17 @@ use App\Http\Requests\ConvertFileRequest;
 use App\Http\Requests\UploadFileRequest;
 use App\Http\Resources\ConversionResource;
 use App\Http\Resources\FileResource;
+use App\Http\Responses\CollectionResponse;
+use App\Http\Responses\MessageResponse;
+use App\Http\Responses\ModelResponse;
 use App\Models\File;
+use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileController extends Controller
@@ -22,9 +26,9 @@ class FileController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): Responsable
     {
-        return $this->respondWithSuccess(
+        return new CollectionResponse(
             FileResource::collection(
                 QueryBuilder::for(File::class)
                     ->allowedFilters([
@@ -42,7 +46,7 @@ class FileController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(UploadFileRequest $request): JsonResponse
+    public function store(UploadFileRequest $request): Responsable
     {
         /** @var \Illuminate\Http\UploadedFile $uploadFile */
         $uploadFile = $request->file;
@@ -55,48 +59,55 @@ class FileController extends Controller
         $file->user_id = $request->user()->id;
         $file->save();
 
-        return $this->respondCreated(new FileResource($file));
+        return new ModelResponse(
+            new FileResource($file),
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(File $file): JsonResponse
+    public function show(File $file): Responsable
     {
         $this->authorize('view', $file);
 
         $file->load('conversions');
 
-        return $this->respondWithSuccess(
-            new FileResource(
-                $file
-            )
+        return new ModelResponse(
+            new FileResource($file),
         );
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(File $file): JsonResponse
+    public function destroy(File $file): Responsable
     {
         $this->authorize('delete', $file);
 
         $file->delete();
 
-        return $this->respondNoContent();
+        return new MessageResponse(
+            [],
+            Response::HTTP_NO_CONTENT,
+        );
     }
 
     /**
      * Convert file into another format specify in query parameter
      */
-    public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService): JsonResponse
+    public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService): Responsable
     {
         $this->authorize('convert', $file);
 
         $convertExtension = FileExtensionEnum::from($request->convert_format);
         $conversions = $converterService->convert($file, $convertExtension);
 
-        return $this->respondCreated(ConversionResource::collection($conversions));
+        return new CollectionResponse(
+            ConversionResource::collection($conversions),
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
