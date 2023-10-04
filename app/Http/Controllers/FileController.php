@@ -34,7 +34,7 @@ class FileController extends Controller
                         }),
                     ])
                     ->whereUserId($request->user()->id)
-                    ->get()
+                    ->jsonPaginate()
             )
         );
     }
