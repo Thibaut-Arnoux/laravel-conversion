@@ -9,9 +9,12 @@ use App\Http\Requests\UploadFileRequest;
 use App\Http\Resources\ConversionResource;
 use App\Http\Resources\FileResource;
 use App\Models\File;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileController extends Controller
@@ -23,7 +26,13 @@ class FileController extends Controller
     {
         return $this->respondWithSuccess(
             FileResource::collection(
-                File::query()
+                QueryBuilder::for(File::class)
+                    ->allowedFilters([
+                        'name',
+                        AllowedFilter::callback('has_conversions', function (Builder $query, $value) {
+                            return $value === true ? $query->has('conversions') : $query->doesntHave('conversions');
+                        }),
+                    ])
                     ->whereUserId($request->user()->id)
                     ->get()
             )
