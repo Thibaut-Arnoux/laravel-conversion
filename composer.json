@@ -2,7 +2,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.1",
@@ -18,7 +21,6 @@
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.13",
-        "f9webltd/laravel-api-response-helpers": "^1.5",
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
@@ -47,13 +49,13 @@
             "@php artisan ide-helper:models -n"
         ],
         "pint": [
-          "./vendor/bin/pint"
+            "./vendor/bin/pint"
         ],
         "stan": [
-          "./vendor/bin/phpstan analyse --memory-limit=3g"
+            "./vendor/bin/phpstan analyse --memory-limit=3g"
         ],
         "test": [
-          "@php artisan test"
+            "@php artisan test"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
