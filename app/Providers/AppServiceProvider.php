@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
+use DB;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
     {
         Model::shouldBeStrict(! app()->isProduction());
 
-        JsonResource::withoutWrapping();
+        DB::listen(function ($query) {
+            File::append(
+                storage_path('/logs/query.log'),
+                '['.date('Y-m-d H:i:s').']'.PHP_EOL.$query->sql.' ['.implode(', ', $query->bindings).']'.PHP_EOL.PHP_EOL
+            );
+        });
     }
 }
