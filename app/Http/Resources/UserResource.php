@@ -27,8 +27,8 @@ class UserResource extends JsonResource
             'id' => $this->resource->id,
             'name' => $this->resource->name,
             'email' => $this->resource->email,
-            'created_at' => new DateResource($this->resource->created_at),
-            'updated_at' => new DateResource($this->resource->updated_at),
+            'created_at' => DateResource::make($this->resource->created_at),
+            'updated_at' => DateResource::make($this->resource->updated_at),
         ];
     }
 }

@@ -29,10 +29,10 @@ class FileResource extends JsonResource
             'id' => $this->resource->id,
             'name' => $this->resource->name,
             'extension' => $this->resource->extension,
-            'conversions' => ConversionResource::collection($this->whenLoaded('conversions')),
-            'created_by' => new UserResource($this->whenLoaded('user')),
-            'created_at' => new DateResource($this->resource->created_at),
-            'updated_at' => new DateResource($this->resource->updated_at),
+            'conversions' => ConversionCollection::make($this->whenLoaded('conversions')),
+            'created_by' => UserResource::make($this->whenLoaded('user')),
+            'created_at' => DateResource::make($this->resource->created_at),
+            'updated_at' => DateResource::make($this->resource->updated_at),
         ];
     }
 }

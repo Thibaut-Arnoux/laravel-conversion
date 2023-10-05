@@ -26,11 +26,11 @@ class ConversionResource extends JsonResource
     {
         return [
             'id' => $this->resource->id,
-            'original_file' => new FileResource($this->whenLoaded('originalFile')),
-            'convert_file' => new FileResource($this->whenLoaded('convertFile')),
-            'created_by' => new UserResource($this->whenLoaded('user')),
-            'created_at' => new DateResource($this->resource->created_at),
-            'updated_at' => new DateResource($this->resource->updated_at),
+            'original_file' => FileResource::make($this->whenLoaded('originalFile')),
+            'convert_file' => FileResource::make($this->whenLoaded('convertFile')),
+            'created_by' => UserResource::make($this->whenLoaded('user')),
+            'created_at' => DateResource::make($this->resource->created_at),
+            'updated_at' => DateResource::make($this->resource->updated_at),
         ];
     }
 }
