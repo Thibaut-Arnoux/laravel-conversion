@@ -6,14 +6,12 @@ use App\Converter\IConverterService;
 use App\Enums\FileExtensionEnum;
 use App\Http\Requests\ConvertFileRequest;
 use App\Http\Requests\UploadFileRequest;
-use App\Http\Resources\ConversionResource;
+use App\Http\Resources\ConversionCollection;
+use App\Http\Resources\FileCollection;
 use App\Http\Resources\FileResource;
-use App\Http\Responses\CollectionResponse;
-use App\Http\Responses\MessageResponse;
-use App\Http\Responses\ModelResponse;
 use App\Models\File;
-use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -26,27 +24,27 @@ class FileController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): Responsable
+    public function index(Request $request): JsonResponse
     {
-        return new CollectionResponse(
-            FileResource::collection(
-                QueryBuilder::for(File::class)
-                    ->allowedFilters([
-                        'name',
-                        AllowedFilter::callback('has_conversions', function (Builder $query, $value) {
-                            return $value === true ? $query->has('conversions') : $query->doesntHave('conversions');
-                        }),
-                    ])
-                    ->whereUserId($request->user()->id)
-                    ->jsonPaginate()
-            )
-        );
+        return FileCollection::make(
+            QueryBuilder::for(File::class)
+                ->allowedFilters([
+                    'name',
+                    AllowedFilter::callback('has_conversions', function (Builder $query, $value) {
+                        return $value === true ? $query->has('conversions') : $query->doesntHave('conversions');
+                    }),
+                ])
+                ->whereUserId($request->user()->id)
+                ->jsonPaginate()
+
+        )
+            ->toResponse($request);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(UploadFileRequest $request): Responsable
+    public function store(UploadFileRequest $request): JsonResponse
     {
         /** @var \Illuminate\Http\UploadedFile $uploadFile */
         $uploadFile = $request->file;
@@ -59,36 +57,33 @@ class FileController extends Controller
         $file->user_id = $request->user()->id;
         $file->save();
 
-        return new ModelResponse(
-            new FileResource($file),
-            Response::HTTP_CREATED,
-        );
+        return FileResource::make($file)
+            ->toResponse($request);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(File $file): Responsable
+    public function show(Request $request, File $file): JsonResponse
     {
         $this->authorize('view', $file);
 
         $file->load('conversions');
 
-        return new ModelResponse(
-            new FileResource($file),
-        );
+        return FileResource::make($file)
+            ->toResponse($request);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(File $file): Responsable
+    public function destroy(File $file): JsonResponse
     {
         $this->authorize('delete', $file);
 
         $file->delete();
 
-        return new MessageResponse(
+        return new JsonResponse(
             [],
             Response::HTTP_NO_CONTENT,
         );
@@ -97,17 +92,15 @@ class FileController extends Controller
     /**
      * Convert file into another format specify in query parameter
      */
-    public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService): Responsable
+    public function convert(ConvertFileRequest $request, File $file, IConverterService $converterService): JsonResponse
     {
         $this->authorize('convert', $file);
 
         $convertExtension = FileExtensionEnum::from($request->convert_format);
         $conversions = $converterService->convert($file, $convertExtension);
 
-        return new CollectionResponse(
-            ConversionResource::collection($conversions),
-            Response::HTTP_CREATED,
-        );
+        return ConversionCollection::make($conversions)
+            ->toResponse($request);
     }
 
     /**

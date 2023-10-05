@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ConversionCollection;
 use App\Http\Resources\ConversionResource;
 use App\Models\Conversion;
 use Illuminate\Http\JsonResponse;
@@ -14,23 +15,23 @@ class ConversionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        return $this->respondWithSuccess(
-            ConversionResource::collection(
-                Conversion::query()
-                    ->with('originalFile', 'convertFile')
-                    ->whereUserId($request->user()->id)
-                    ->get()
-            )
-        );
+        return ConversionCollection::make(
+            Conversion::query()
+                ->with('originalFile', 'convertFile')
+                ->whereUserId($request->user()->id)
+                ->get()
+        )
+            ->toResponse($request);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Conversion $conversion): JsonResponse
+    public function show(Request $request, Conversion $conversion): JsonResponse
     {
         $conversion->load(['originalFile', 'convertFile']);
 
-        return $this->respondWithSuccess(new ConversionResource($conversion));
+        return ConversionResource::make($conversion)
+            ->toResponse($request);
     }
 }

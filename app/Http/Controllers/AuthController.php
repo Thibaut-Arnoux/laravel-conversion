@@ -9,6 +9,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
@@ -21,11 +22,14 @@ class AuthController extends Controller
         $name = $request->userAgent() ?? 'auth_token';
         $token = $user->createToken($name)->plainTextToken;
 
-        return $this->respondCreated([
-            'user' => new UserResource($user),
-            'token' => $token,
-            'token_type' => 'Bearer',
-        ]);
+        return new JsonResponse(
+            [
+                'user' => UserResource::make($user),
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ],
+            Response::HTTP_CREATED,
+        );
     }
 
     /**
@@ -41,10 +45,12 @@ class AuthController extends Controller
         $name = $request->userAgent() ?? 'auth_token';
         $token = $user->createToken($name)->plainTextToken;
 
-        return $this->respondWithSuccess([
-            'token' => $token,
-            'token_type' => 'Bearer',
-        ]);
+        return new JsonResponse(
+            [
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ],
+        );
     }
 
     /**
@@ -54,6 +60,9 @@ class AuthController extends Controller
     {
         Auth::user()->tokens()->delete();
 
-        return $this->respondNoContent();
+        return new JsonResponse(
+            [],
+            Response::HTTP_NO_CONTENT,
+        );
     }
 }
