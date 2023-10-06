@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
@@ -17,9 +18,19 @@ use Illuminate\Support\Facades\Route;
 
 // oauth
 Route::prefix('auth')->as('auth.')->group(function () {
-    Route::post('/register', [App\Http\Controllers\AuthController::class, 'register'])->name('register');
-    Route::post('/login', [App\Http\Controllers\AuthController::class, 'login'])->name('login');
-    Route::post('/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout')->middleware(['auth:sanctum']);
+    Route::middleware('guest')->group(function () {
+        Route::post('/register', [AuthController::class, 'register'])->name('register');
+        Route::post('/login', [AuthController::class, 'login'])->name('login');
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.email');
+        Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+    });
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        Route::put('/password', [AuthController::class, 'updatePassword'])->name('password.update');
+        // TODO : move to profile controller
+        Route::get('/user', [AuthController::class, 'getAuthenticatedUser'])->name('user');
+    });
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
