@@ -6,10 +6,12 @@ use App\Http\Requests\Auth\ForgotRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\PasswordRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResetRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Exception;
 use Hash;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -127,8 +129,34 @@ class AuthController extends Controller
     /**
      * Reset user password
      */
-    public function resetPassword(Request $request): JsonResponse
+    public function resetPassword(ResetRequest $request): JsonResponse
     {
-        throw new Exception('Not implemented');
+        $validated = $request->validated();
+        $reset = [
+            'token' => $validated['token'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+        ];
+
+        $status = Password::reset(
+            $reset,
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status == Password::PASSWORD_RESET) {
+            return new JsonResponse([
+                'message' => __($status),
+            ]);
+        } else {
+            throw ValidationException::withMessages([
+                'email' => __($status),
+            ]);
+        }
     }
 }
