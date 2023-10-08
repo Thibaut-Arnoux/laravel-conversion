@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\ForgotRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\PasswordRequest;
 use App\Http\Requests\Auth\RegisterRequest;
@@ -106,13 +107,13 @@ class AuthController extends Controller
     /**
      * Forgot password
      */
-    public function forgotPassword(Request $request): JsonResponse
+    public function forgotPassword(ForgotRequest $request): JsonResponse
     {
-        $request->validate(['email' => 'required|email']);
+        $validated = $request->validated();
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $status = Password::sendResetLink([
+            'email' => $validated['email'],
+        ]);
 
         if ($status === Password::RESET_LINK_SENT) {
             return response()->json(['message' => __($status)], 200);
