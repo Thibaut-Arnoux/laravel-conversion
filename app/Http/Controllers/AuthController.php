@@ -14,6 +14,7 @@ use Hash;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
@@ -113,6 +114,9 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        // set local to fr to have default mailing in french
+        App::setLocale('fr');
+
         $status = Password::sendResetLink([
             'email' => $validated['email'],
         ]);
@@ -121,7 +125,7 @@ class AuthController extends Controller
             return response()->json(['message' => __($status)], 200);
         } else {
             throw ValidationException::withMessages([
-                'email' => __($status),
+                'email' => $status,
             ]);
         }
     }
@@ -151,11 +155,11 @@ class AuthController extends Controller
 
         if ($status == Password::PASSWORD_RESET) {
             return new JsonResponse([
-                'message' => __($status),
+                'message' => $status,
             ]);
         } else {
             throw ValidationException::withMessages([
-                'email' => __($status),
+                'email' => $status,
             ]);
         }
     }
