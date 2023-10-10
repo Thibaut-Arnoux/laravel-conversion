@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConversionController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,12 +29,15 @@ Route::prefix('auth')->as('auth.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::put('/password', [AuthController::class, 'updatePassword'])->name('password.update');
-        // TODO : move to profile controller
         Route::get('/user', [AuthController::class, 'getAuthenticatedUser'])->name('user');
     });
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
+    // profile
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
     // files
     Route::apiResource('files', FileController::class)->except(['update']);
     Route::prefix('files')->as('files.')->group(function () {
