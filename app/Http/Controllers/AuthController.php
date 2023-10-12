@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\PasswordRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetRequest;
 use App\Http\Resources\UserResource;
+use App\Models\PersonalRefreshToken;
 use App\Models\User;
 use Exception;
 use Hash;
@@ -35,13 +36,15 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
         $name = $request->userAgent() ?? 'auth_token';
-        $token = $user->createToken($name)->plainTextToken;
+        $accessToken = $user->createToken($name);
+        $refreshToken = $user->createRefreshToken($name, $accessToken->accessToken);
 
         return new JsonResponse(
             [
                 'user' => UserResource::make($user),
-                'access_token' => $token,
+                'access_token' => $accessToken->plainTextToken,
                 'token_type' => 'Bearer',
+                'refresh_token' => $refreshToken->plainTextToken,
             ],
             Response::HTTP_CREATED,
         );
@@ -58,12 +61,14 @@ class AuthController extends Controller
 
         $user = Auth::user();
         $name = $request->userAgent() ?? 'auth_token';
-        $token = $user->createToken($name)->plainTextToken;
+        $accessToken = $user->createToken($name);
+        $refreshToken = $user->createRefreshToken($name, $accessToken->accessToken);
 
         return new JsonResponse(
             [
-                'access_token' => $token,
+                'access_token' => $accessToken->plainTextToken,
                 'token_type' => 'Bearer',
+                'refresh_token' => $refreshToken->plainTextToken,
             ],
         );
     }
@@ -73,11 +78,41 @@ class AuthController extends Controller
      */
     public function logout(): JsonResponse
     {
+        Auth::user()->refreshTokens()->delete();
         Auth::user()->tokens()->delete();
 
         return new JsonResponse(
             [],
             Response::HTTP_NO_CONTENT,
+        );
+    }
+
+    /**
+     * Refresh token
+     */
+    public function refreshToken(Request $request): JsonResponse
+    {
+        // injected from middleware
+        /** @var PersonalRefreshToken $refreshToken */
+        $refreshToken = $request->refresh_token;
+        /** @var User $user */
+        $user = $refreshToken->tokenable;
+
+        // revoke token
+        $refreshToken->delete();
+        $refreshToken->accessToken->delete();
+
+        // create new token
+        $name = $request->userAgent() ?? 'auth_token';
+        $accessToken = $user->createToken($name);
+        $refreshToken = $user->createRefreshToken($name, $accessToken->accessToken);
+
+        return new JsonResponse(
+            [
+                'access_token' => $accessToken->plainTextToken,
+                'token_type' => 'Bearer',
+                'refresh_token' => $refreshToken->plainTextToken,
+            ],
         );
     }
 

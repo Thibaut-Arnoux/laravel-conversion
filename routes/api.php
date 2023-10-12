@@ -23,6 +23,8 @@ Route::prefix('auth')->as('auth.')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.email');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+    Route::get('/refresh-token', [AuthController::class, 'refreshToken'])->name('token.refresh')
+        ->middleware('refresh.token');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
