@@ -20,6 +20,12 @@ class File extends Model
         'extension' => FileExtensionEnum::class,
     ];
 
+    protected $fillable = [
+        'name',
+        'path',
+        'extension',
+    ];
+
     /**
      * Retrieves the conversions associated with this model.
      *
