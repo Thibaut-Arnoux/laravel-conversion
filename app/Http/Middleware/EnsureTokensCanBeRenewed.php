@@ -20,13 +20,14 @@ class EnsureTokensCanBeRenewed
         $accessTokenFromRequest = $request->bearerToken() ?? '';
         $refreshTokenFromRequest = is_string($request->cookie('refresh_token'))
             ? (string) $request->cookie('refresh_token')
-            : null;
+            : '';
 
         $accessToken = PersonalAccessToken::findToken($accessTokenFromRequest);
         $refreshToken = PersonalRefreshToken::findToken($refreshTokenFromRequest);
 
         if (! $this->isValidRefreshToken($refreshToken)
             || $accessToken === null
+            || $refreshToken->tokenable->id !== $accessToken->tokenable->id
             || $refreshToken->accessToken->token !== $accessToken->token) {
             return response()->json([
                 'message' => 'Invalid parameters to refresh token.',
