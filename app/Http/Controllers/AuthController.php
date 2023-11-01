@@ -42,9 +42,11 @@ class AuthController extends Controller
         return new JsonResponse(
             [
                 'user' => UserResource::make($user),
-                'access_token' => $accessToken->plainTextToken,
-                'token_type' => 'Bearer',
-                'refresh_token' => $refreshToken->plainTextToken,
+                'tokens' => [
+                    'access_token' => $accessToken->plainTextToken,
+                    'token_type' => 'Bearer',
+                    'refresh_token' => $refreshToken->plainTextToken,
+                ],
             ],
             Response::HTTP_CREATED,
         );
@@ -66,9 +68,12 @@ class AuthController extends Controller
 
         return new JsonResponse(
             [
-                'access_token' => $accessToken->plainTextToken,
-                'token_type' => 'Bearer',
-                'refresh_token' => $refreshToken->plainTextToken,
+                'user' => UserResource::make($user),
+                'tokens' => [
+                    'access_token' => $accessToken->plainTextToken,
+                    'token_type' => 'Bearer',
+                    'refresh_token' => $refreshToken->plainTextToken,
+                ],
             ],
         );
     }
